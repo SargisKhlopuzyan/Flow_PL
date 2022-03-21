@@ -28,10 +28,6 @@ class MainViewModel : ViewModel() {
 
     fun triggerStateFlow() {
         _stateFlow.value = "StateFlow"
-
-//        viewModelScope.launch {
-//            _stateFlow.emit("StateFlow")
-//        }
     }
 
     fun triggerFlow(): Flow<String> {

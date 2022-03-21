@@ -3,9 +3,7 @@ package com.sargis.khlopuzyan.flow_pl
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
@@ -24,8 +22,49 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    // State Flow
+    private val _stateFlow = MutableStateFlow(0)
+    val stateFlow = _stateFlow.asStateFlow()
+
+    // Shared Flow
+    private val _shareFlow = MutableSharedFlow<Int>(replay = 5)
+    val shareFlow = _shareFlow.asSharedFlow()
+
     init {
-        collectFlow()
+        // State Flow
+//        collectFlow()
+
+        // Shared Flow
+
+        viewModelScope.launch {
+            shareFlow.collect {
+                delay(2000L)
+                log("FIRST FLOW: The received number is $it")
+            }
+        }
+
+        viewModelScope.launch {
+            shareFlow.collect {
+                delay(3000L)
+                log("SECOND FLOW: The received number is $it")
+            }
+        }
+
+        squareNumber(3)
+
+        // END OF : // Shared Flow
+    }
+
+
+    fun incrementCounter() {
+        _stateFlow.value += 1
+    }
+
+    // Shared Flow
+    fun squareNumber(number: Int) {
+        viewModelScope.launch {
+            _shareFlow.emit(number * number)
+        }
     }
 
     private fun collectFlow() {

@@ -9,18 +9,20 @@ import kotlinx.coroutines.launch
 /**
  * Created by Sargis Khlopuzyan on 3/20/2022.
  */
-class MainViewModel : ViewModel() {
+class MainViewModel(
+    private val dispatchers: DispatcherProvider
+) : ViewModel() {
 
     val countDownFlow = flow<Int> {
         val startingValue = 5
         var currentValue = startingValue
         emit(startingValue)
         while (currentValue > 0) {
-            delay(500L)
+            delay(1000L)
             currentValue--
             emit(currentValue)
         }
-    }
+    }.flowOn(dispatchers.main)
 
     // State Flow
     private val _stateFlow = MutableStateFlow(0)
@@ -36,14 +38,14 @@ class MainViewModel : ViewModel() {
 
         // Shared Flow
 
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
             shareFlow.collect {
                 delay(2000L)
                 log("FIRST FLOW: The received number is $it")
             }
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
             shareFlow.collect {
                 delay(3000L)
                 log("SECOND FLOW: The received number is $it")
@@ -62,7 +64,7 @@ class MainViewModel : ViewModel() {
 
     // Shared Flow
     fun squareNumber(number: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
             _shareFlow.emit(number * number)
         }
     }
@@ -74,7 +76,7 @@ class MainViewModel : ViewModel() {
 //            println(it)
 //        }.launchIn(viewModelScope)
 
-//        viewModelScope.launch {
+//        viewModelScope.launch(dispatchers.main) {
 //
 ////            // TODO ***1
 ////            countDownFlow.collect {
@@ -161,7 +163,7 @@ class MainViewModel : ViewModel() {
 //            emit(2)
 //        }
 //
-//        viewModelScope.launch {
+//        viewModelScope.launch(dispatchers.main) {
 //            flow1.flatMapConcat { value ->
 //                flow {
 //                    emit(value + 1)
@@ -174,7 +176,7 @@ class MainViewModel : ViewModel() {
 //        }
 
 //        val flow1 = (1..5).asFlow()
-//        viewModelScope.launch {
+//        viewModelScope.launch(dispatchers.main) {
 //            flow1.flatMapLatest { value ->
 ////            flow1.flatMapConcat { value ->
 ////            flow1.flatMapMerge { value ->
@@ -193,7 +195,7 @@ class MainViewModel : ViewModel() {
             emit("Dessert")
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
 //            flow.onEach {
 //                log("FLOW: $it is delivered")
 //            }

@@ -1,48 +1,74 @@
 package com.sargis.khlopuzyan.flow_pl
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sargis.khlopuzyan.flow_pl.ui.theme.Flow_PLTheme
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
+import com.sargis.khlopuzyan.flow_pl.databinding.ActivityMainBinding
+import kotlinx.coroutines.flow.collectLatest
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+
+    private var _binding: ActivityMainBinding? = null
+    private val binding: ActivityMainBinding
+        get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            Flow_PLTheme {
-                val viewModel = viewModel<MainViewModel>()
-                val time = viewModel.countDownFlow.collectAsState(initial = 10)
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Text(
-                        text = time.value.toString(),
-                        fontSize = 30.sp,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+        _binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
+        binding.btnLiveDate.setOnClickListener {
+            viewModel.triggerLiveData()
+        }
+
+        binding.btnStateFlow.setOnClickListener {
+            viewModel.triggerStateFlow()
+        }
+
+        binding.btnFlow.setOnClickListener {
+            lifecycleScope.launchWhenCreated {
+                viewModel.triggerFlow().collectLatest {
+                    binding.tvFlow.text = it
                 }
             }
         }
-    }
-}
 
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
+        binding.btnSharedFlow.setOnClickListener {
+            viewModel.triggerSharedFlow()
+        }
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    Flow_PLTheme {
-        Greeting("Android")
+        subscribeToObservables()
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
+
+    private fun subscribeToObservables() {
+        viewModel.liveData.observe(this) {
+            binding.tvLiveDate.text = it
+        }
+
+        lifecycleScope.launchWhenStarted {
+            viewModel.stateFlow.collectLatest {
+                binding.tvStateFlow.text = it
+            }
+        }
+
+        lifecycleScope.launchWhenCreated {
+
+        }
+
+        lifecycleScope.launchWhenCreated {
+            viewModel.sharedFlow.collectLatest {
+                binding.tvSharedFlow.text = it
+            }
+        }
+
+    }
+
 }
